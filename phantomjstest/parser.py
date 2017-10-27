@@ -50,11 +50,11 @@ class PhantomJSParser(object):
 
         self.driver2.get(url)  # DRIVER2
 
-        print("_parse_page - Saving page to file...")
+        # print("_parse_page - Saving page to file...")
         filename = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f')
-        text_file = open(filename + '.html', "w")
-        text_file.write(self.driver2.page_source)  # DRIVER2
-        text_file.close()
+        # text_file = open(filename + '.html', "w")
+        # text_file.write(self.driver2.page_source)  # DRIVER2
+        # text_file.close()
 
         self.driver2.save_screenshot(filename + '.png')  # DRIVER2
 
@@ -70,10 +70,10 @@ class PhantomJSParser(object):
         self.driver2.implicitly_wait(1)  # DRIVER2
         self.driver2.delete_all_cookies()  # DRIVER2
         for cookie in cookies:
-            print('cookie: {0} ==> {1}'.format(cookie['name'], cookie['value']))
+            # print('cookie: {0} ==> {1}'.format(cookie['name'], cookie['value']))
             new_cookie = dict()
             for k, v in cookie.items():
-                print('   {0}: {1}'.format(k, v))
+                # print('   {0}: {1}'.format(k, v))
                 # if 'domain' == k:
                 #     new_cookie[k] = COOKIE_DOMAIN
                 # else:
