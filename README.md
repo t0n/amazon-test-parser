@@ -55,5 +55,7 @@ docker run -it antonkoba/amazon-test-parser:v1 /bin/bash
 
 Inside running docker container:
 
+vi settings.py
+
 python parse.py <Your Search Query>
 
