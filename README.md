@@ -2,10 +2,18 @@
 
 Test project to parse search results on Amazon.com
 
+
+
 ## Requirements
+
 - NodeJS, npm
 - Python3
 - virtualenv
+
+
+or Docker
+
+
 
 ## Installation
 
@@ -17,6 +25,12 @@ Run ./install.sh script (will ask for sudo password to install phantomjs globall
 
 (TODO)
 
+### Docker
+
+docker run antonkoba/amazon-test-parser:v1
+
+
+
 ## Running
 
 ### Linux
@@ -26,4 +40,20 @@ Run ./run.sh <Your Search Query>
 ### MacOS
 
 (TODO)
+
+### Docker
+
+Run:
+
+docker run -it amazon-test-parser /bin/bash
+
+or
+
+docker run -it antonkoba/amazon-test-parser:v1 /bin/bash
+
+
+
+Inside running docker container:
+
+python parse.py <Your Search Query>
 
