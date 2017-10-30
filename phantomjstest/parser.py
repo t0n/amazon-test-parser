@@ -3,9 +3,7 @@
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 import datetime
-import time
 
-from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 BASE_URL = 'https://www.amazon.com'
@@ -18,10 +16,10 @@ class PhantomJSParser(object):
     site_login = None
     site_password = None
     driver = None
-    driver2 = None
 
     def __init__(self, site_login, site_password):
         print("Initializing parser...")
+
         self.site_login = site_login
         self.site_password = site_password
 
@@ -33,7 +31,6 @@ class PhantomJSParser(object):
 
         print("Starting driver...")
         self.driver = webdriver.PhantomJS(desired_capabilities=dcap)
-        self.driver2 = webdriver.PhantomJS(desired_capabilities=dcap)
 
     def _parse_page(self, url):
         """
@@ -46,46 +43,13 @@ class PhantomJSParser(object):
         print("_parse_page - Getting URL {0}...".format(url))
         self.driver.get(url)
 
-        self._fix_cookies(url)
-
-        self.driver2.get(url)  # DRIVER2
-
-        # print("_parse_page - Saving page to file...")
         filename = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f')
-        # text_file = open(filename + '.html', "w")
-        # text_file.write(self.driver2.page_source)  # DRIVER2
-        # text_file.close()
-
-        self.driver2.save_screenshot(filename + '.png')  # DRIVER2
+        self.driver.save_screenshot(filename + '.png')
 
         print("_parse_page - Starting parsing...")
-        html_page = bs(self.driver2.page_source, "html.parser")  # DRIVER2
+        html_page = bs(self.driver.page_source, "html.parser")
 
         return html_page
-
-    def _fix_cookies(self, url):
-        print('_fix_cookies - fixing cookies...')
-        cookies = self.driver.get_cookies()
-        self.driver2.get(url)  # DRIVER2
-        self.driver2.implicitly_wait(1)  # DRIVER2
-        self.driver2.delete_all_cookies()  # DRIVER2
-        for cookie in cookies:
-            # print('cookie: {0} ==> {1}'.format(cookie['name'], cookie['value']))
-            new_cookie = dict()
-            for k, v in cookie.items():
-                # print('   {0}: {1}'.format(k, v))
-                # if 'domain' == k:
-                #     new_cookie[k] = COOKIE_DOMAIN
-                # else:
-                #     new_cookie[k] = v
-                new_cookie[k] = v
-            if 'expiry' not in cookie:
-                new_cookie['expiry'] = 1575825481
-            try:
-                self.driver2.add_cookie(new_cookie)  # DRIVER2
-            except WebDriverException:
-                print('ERROR, cannot set this cookie!')
-        self.driver2.implicitly_wait(1)  # DRIVER2
 
     def _get_login_url(self, soup):
         login_link = soup.find(id='nav-link-accountList')
@@ -108,7 +72,6 @@ class PhantomJSParser(object):
 
         password_element.send_keys(self.site_password)
 
-        # submit_button = self.driver.find_element_by_id('a-autoid-0')
         submit_button = self.driver.find_element_by_id('signInSubmit')
         print('_login_to_site - submit_button: ' + str(submit_button))
 
@@ -117,19 +80,10 @@ class PhantomJSParser(object):
         print('_login_to_site - submitting form...')
         submit_button.click()
 
-        print('_login_to_site - waiting for a page to refresh...')
-        self.driver.save_screenshot(datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f') + '__wait.png')
-        print('_login_to_site URL: ' + self.driver.current_url)
-        time.sleep(5)
-        self.driver.save_screenshot(datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f') + '__wait.png')
-        print('_login_to_site URL: ' + self.driver.current_url)
-        time.sleep(5)
-
         # Get Current URL
         current_url = self.driver.current_url
         print('_login_to_site URL: ' + current_url)
 
-        # return self._parse_page(current_url)
         return self._parse_page(HOME_URL)
 
     def _do_search(self, soup, search_query):
@@ -145,12 +99,6 @@ class PhantomJSParser(object):
         print('_do_search - submitting form...')
         submit_button.click()
 
-        print('_do_search - waiting for a page to refresh...')
-        self.driver.save_screenshot(datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f') + '__wait.png')
-        print('_do_search URL: ' + self.driver.current_url)
-        time.sleep(5)
-
-        # Get Current URL
         current_url = self.driver.current_url
         print('_do_search URL: ' + current_url)
 
@@ -182,7 +130,6 @@ class PhantomJSParser(object):
         results = []
 
         results_list = soup.find(id='s-results-list-atf')
-        # print('_parse_search_results - results_list: ' + str(results_list))
 
         for search_result in results_list.findAll('li'):
             parsed_search_result = self._parse_search_results_item(search_result)

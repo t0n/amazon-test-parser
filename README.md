@@ -49,7 +49,7 @@ docker run -it amazon-test-parser /bin/bash
 
 or
 
-docker run -it antonkoba/amazon-test-parser:v1 /bin/bash
+docker run -it antonkoba/amazon-test-parser:v2 /bin/bash
 
 
 

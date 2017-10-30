@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 ADD . /app
 
-# Update and install Node
+# Update all and install additional tools
 RUN \
   apt-get update && \
   apt-get install -y --no-install-recommends apt-utils && \
@@ -15,10 +15,10 @@ RUN \
   apt-get install -y wget \
     ca-certificates \
     bzip2 \
-    vi \
+    vim \
     libfontconfig
 
-
+# Install Node 6.*
 RUN \
   echo "deb https://deb.nodesource.com/node_6.x jessie main" > /etc/apt/sources.list.d/nodesource.list && \
   wget -qO- https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
@@ -26,12 +26,10 @@ RUN \
   apt-get install -yqq nodejs && \
   rm -rf /var/lib/apt/lists/*
 
+# Install PhantomJS
 RUN \
     npm install -g phantomjs-prebuilt
 
 # Install any needed packages specified in requirements.txt
 RUN \
     pip install -r requirements.txt
-
-# Run app.py when the container launches
-#CMD ["python", "parse.py", "Home Decor"]
