@@ -5,3 +5,5 @@
 __pycache__
 ghostdriver.log
 *.png
+node_modules/
+screenshots/

@@ -3,12 +3,22 @@
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 import datetime
+import logging
+import os
 
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 BASE_URL = 'https://www.amazon.com'
 COOKIE_DOMAIN = '.amazon.com'
 HOME_URL = BASE_URL + '/'
+
+
+# Setup a new root logging handler
+while len(logging.root.handlers) > 0:
+    logging.root.removeHandler(logging.root.handlers[-1])
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
 
 
 class PhantomJSParser(object):
@@ -18,7 +28,7 @@ class PhantomJSParser(object):
     driver = None
 
     def __init__(self, site_login, site_password):
-        print("Initializing parser...")
+        logger.debug("Initializing parser...")
 
         self.site_login = site_login
         self.site_password = site_password
@@ -29,8 +39,14 @@ class PhantomJSParser(object):
             "(KHTML, like Gecko) Chrome/15.0.87"
         )
 
-        print("Starting driver...")
+        logger.debug("Starting driver...")
         self.driver = webdriver.PhantomJS(desired_capabilities=dcap)
+
+    def _make_screenshot(self):
+        filename = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f') + '.png'
+        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'screenshots', filename)
+        logging.debug('saving screenshot to: ' + filename)
+        self.driver.save_screenshot(filename)
 
     def _parse_page(self, url):
         """
@@ -38,75 +54,78 @@ class PhantomJSParser(object):
         :return: BS object (not HTML text)
         """
         cookies = self.driver.get_cookies()
-        print('_parse_page - cookies BEFORE get: ' + str(cookies))
+        logger.debug('_parse_page - cookies BEFORE get: ' + str(cookies))
 
-        print("_parse_page - Getting URL {0}...".format(url))
+        logger.debug("_parse_page - Getting URL {0}...".format(url))
         self.driver.get(url)
 
-        filename = datetime.datetime.now().strftime('%Y_%m_%d__%H_%M_%S_%f')
-        self.driver.save_screenshot(filename + '.png')
+        self._make_screenshot()
 
-        print("_parse_page - Starting parsing...")
+        logger.debug("_parse_page - Starting parsing...")
         html_page = bs(self.driver.page_source, "html.parser")
 
         return html_page
 
     def _get_login_url(self, soup):
         login_link = soup.find(id='nav-link-accountList')
-        print('_get_login_url - login_link: ' + str(login_link.attrs))
+        logger.debug('_get_login_url - login_link: ' + str(login_link.attrs))
 
         login_page_url = login_link.attrs['href']
-        print('_get_login_url - login_page_url: ' + str(login_page_url))
+        logger.debug('_get_login_url - login_page_url: ' + str(login_page_url))
 
         return BASE_URL + login_page_url
 
     def _login_to_site(self, soup):
 
         login_element = self.driver.find_element_by_id('ap_email')
-        print('_login_to_site - login_element: ' + str(login_element))
+        logger.debug('_login_to_site - login_element: ' + str(login_element))
 
         login_element.send_keys(self.site_login)
 
         password_element = self.driver.find_element_by_id('ap_password')
-        print('_login_to_site - password_element: ' + str(password_element))
+        logger.debug('_login_to_site - password_element: ' + str(password_element))
 
         password_element.send_keys(self.site_password)
 
         submit_button = self.driver.find_element_by_id('signInSubmit')
-        print('_login_to_site - submit_button: ' + str(submit_button))
+        logger.debug('_login_to_site - submit_button: ' + str(submit_button))
 
-        print('_login_to_site - cookies BEFORE click: ' + str(self.driver.get_cookies()))
+        logger.debug('_login_to_site - cookies BEFORE click: ' + str(self.driver.get_cookies()))
 
-        print('_login_to_site - submitting form...')
+        logger.debug('_login_to_site - submitting form...')
         submit_button.click()
 
         # Get Current URL
         current_url = self.driver.current_url
-        print('_login_to_site URL: ' + current_url)
+        logger.debug('_login_to_site URL: ' + current_url)
+
+        self._make_screenshot()
 
         return self._parse_page(HOME_URL)
 
     def _do_search(self, soup, search_query):
 
         search_box_element = self.driver.find_element_by_id('twotabsearchtextbox')
-        print('_do_search - search_box_element: ' + str(search_box_element))
+        logger.debug('_do_search - search_box_element: ' + str(search_box_element))
 
         search_box_element.send_keys(search_query)
 
         submit_button = self.driver.find_element_by_css_selector('.nav-search-submit input')
-        print('_do_search - submit_button: ' + str(submit_button))
+        logger.debug('_do_search - submit_button: ' + str(submit_button))
 
-        print('_do_search - submitting form...')
+        logger.debug('_do_search - submitting form...')
         submit_button.click()
 
         current_url = self.driver.current_url
-        print('_do_search URL: ' + current_url)
+        logger.debug('_do_search URL: ' + current_url)
+
+        self._make_screenshot()
 
         return self._parse_page(current_url)
 
     def _parse_search_results_item(self, search_result):
         result = dict()
-        print('_parse_search_results_item - search_result: ' + str(search_result))
+        logger.debug('_parse_search_results_item - search_result: ' + str(search_result))
 
         # 1. Image
         image = search_result.find('img')
@@ -140,7 +159,7 @@ class PhantomJSParser(object):
 
     def parse(self, search_query):
 
-        print('parse - Starting parsing scenario...')
+        logger.debug('parse - Starting parsing scenario...')
 
         main_page_soup = self._parse_page(HOME_URL)
         login_url = self._get_login_url(main_page_soup)
@@ -149,12 +168,12 @@ class PhantomJSParser(object):
         search_results = self._do_search(after_login_page_soup, search_query)
         items = self._parse_search_results(search_results)
 
-        print(">" * 120)
-        print(">" * 120)
-        print(">" * 120)
-        print('parse - Parsing scenario finished!')
+        logger.debug(">" * 120)
+        logger.debug(">" * 120)
+        logger.debug(">" * 120)
+        logger.debug('parse - Parsing scenario finished!')
 
-        print('parse - items:')
+        logger.debug('parse - items:')
 
         for item in items:
-            print(str(item))
+            logger.debug(str(item))
